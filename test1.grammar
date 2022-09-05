@@ -1,0 +1,19 @@
+# Unambiguous LALR grammar for simple calculator.
+# F# target test grammar
+
+valuetype int
+nonterminals E T F
+terminals + *
+valueterminal number ~ int ~ Num ~ (fun x->int x)
+lexterminal LPAREN (
+lexterminal RPAREN )
+topsym E
+
+E --> E:e + T:t { e + t }
+E --> T:t { t }
+T --> T:t * F:f { t*f }
+T --> F:f { f }
+F --> LPAREN E:e RPAREN  { e }
+F --> number:n { n }
+
+EOF

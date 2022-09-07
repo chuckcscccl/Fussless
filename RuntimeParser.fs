@@ -9,6 +9,8 @@ open Option
 //type HasDefault<'A> =
 //  abstract Default: unit -> 'A;
 
+type Vec<'A> = ResizeArray<'A>
+
 // this is the only token type the abs parser needs to know about
 type TerminalToken<'AT> =   // AT will be FLTypeDUnion
   {
@@ -18,7 +20,8 @@ type TerminalToken<'AT> =   // AT will be FLTypeDUnion
     mutable column: int;
   }
   member this.set(a,b,c,d) =
-    this.sym<-a; this.svalue<-b; this.line <- c; this.column <- d;;
+    this.sym<-a; this.svalue<-b; this.line <- c; this.column <- d;
+  member this.to_string() = this.sym+"("+string(this.svalue)+")";
 
 ///////////////// runtime parser base
 
@@ -30,8 +33,6 @@ type StackedItem<'AT> =
   };;
 
 type Stateaction = Shift of int | Reduce of int | Gotonext of int | Accept | ParseError of string;;
-
-type Vec<'A> = ResizeArray<'A>
 
 // runtime parser and runtime production:
 type RTProduction<'AT,'ET> =
@@ -123,7 +124,8 @@ and RTParser<'AT,'ET> =
            if this.stack.Count<1 then this.err_occurred<-true
            else result <- Some(this.Pop().svalue)
         | Some(ParseError(msg)) -> this.abort(msg+lexinfo)
-        | _ -> this.abort("Unexpected Token "+string(lookahead.sym)+"("+string(lookahead.svalue)+")"+lexinfo)
+        | _ -> this.abort("Unexpected Token "+lookahead.sym+lexinfo)
+//        | _ -> this.abort("Unexpected Token "+string(lookahead.sym)+"("+string(lookahead.svalue)+")"+lexinfo)                
         //| Some(Gotonext _) -> this.abort("LR parse table corrupted"+lexinfo);
     // while not(stopparsing)
     result;;
@@ -223,3 +225,38 @@ fsharpc test1parser.fs -a -r RuntimeParser.dll
 
 fsharpc test1main.fs -r test1parser.dll -r test1_lex.dll
 *)
+
+
+
+// This structure is for convenience: sets generated tokenizer attributes
+type lexattributes =
+  {
+    mutable oneline_comment: string;
+    mutable ml_comment_start: string;
+    mutable ml_comment_end: string;
+    keep_comment: bool;
+    keep_newline: bool;
+    keep_whitespace: bool;
+    custom_defined: Vec<string*string>;
+  }
+  member this.set_line_comment(cm) = this.oneline_comment <- cm
+  member this.set_multiline_comments(cm:string) =
+    let cms = cm.Split ' '
+    if cms.Length=2 then
+      this.ml_comment_start <- cms.[0]
+      this.ml_comment_end <- cms.[1]
+  member this.add_custom(ckind,cregex) =
+    this.custom_defined.Add((ckind,cregex))
+//////lexattributes    
+  
+let default_attributes() =
+  { lexattributes.oneline_comment="//";
+    ml_comment_start = "/*";
+    ml_comment_end = "*/";
+    keep_comment = false;
+    keep_newline = false;
+    keep_whitespace = false;
+    custom_defined= Vec<string*string>();
+  }
+////////////////  
+

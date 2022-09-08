@@ -50,6 +50,7 @@ and RTParser<'AT,'ET> =
     mutable stopparsing: bool;
     mutable line: int;
     mutable column: int;
+    mutable positions: Vec<int*int>;
     mutable src_id: int;
     mutable Symset: HashSet<string>;
     mutable Rules: RTProduction<'AT,'ET> [];
@@ -61,8 +62,12 @@ and RTParser<'AT,'ET> =
     let lasti = this.stack.Count-1
     let item = this.stack.[lasti]
     this.stack.RemoveAt(lasti)
-    this.line <- item.line; this.column <- item.column;
+    this.positions.Add((item.line,item.column));
+    //this.line <- item.line; this.column <- item.column;
     item;
+  member this.position(i) =
+    if i<0 || i>=this.positions.Count then (0,0)
+    else this.positions.[this.positions.Count-i-1]
   member this.abort (msg:string) =
     Console.Error.WriteLine(msg);
     this.err_occurred <- true;
@@ -85,6 +90,7 @@ and RTParser<'AT,'ET> =
     let sti = this.stack.Count-1;
     let newstate = this.stack.[sti].statei;
     let goton = this.RSM.[newstate].[rulei.lhs]
+    this.positions.Clear()
     match goton with
       | Gotonext nsi ->
           this.stack.Add {StackedItem.statei=nsi; svalue=semval; line=this.line; column=this.column}
@@ -170,6 +176,7 @@ let skeleton_parser<'AT,'ET>(e0:'ET,rlen,mlen) : RTParser<'AT,'ET> =
     stopparsing=false;
     line=0;
     column=0;
+    positions = Vec<int*int>();
     src_id=0;
     Symset= HashSet<string>();
     NextToken= fun () -> None;

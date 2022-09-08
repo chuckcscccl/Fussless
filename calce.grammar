@@ -1,9 +1,13 @@
 # F# version
 
-!//this is injected verbatim into the generated parser
-!type expr = Val of int | Var of string | Float of float | Plus of expr*expr | Times of expr*expr | Minus of expr*expr | Divide of expr*expr | Negative of expr | Letexp of string*expr*expr | Equals of (expr*expr);;
+!
+!type expr = Val of int | Var of string | Float of float | Plus of expr*expr | Times of expr*expr | Minus of expr*expr | Divide of expr*expr | Negative of expr | Letexp of string*expr*expr | Equals of (expr*expr) | Uint of uint64;;
+!
+!let conv64 (x:string) :uint64 = System.UInt64.Parse(x.Substring(0,x.Length-2))
+
 
 valuetype Vec<expr>
+
 nonterminal E expr
 nonterminal ES
 terminals + - * / ( ) == = ;
@@ -11,6 +15,11 @@ terminals let in
 valueterminal Val ~ int ~ Num ~ int
 valueterminal Var ~ string ~ Alphanum ~ (fun x -> x)
 valueterminal Float ~ float ~ Float ~ float
+lexattribute custom U64 [0-9]+UL
+valueterminal Ulong ~ uint64 ~ U64 ~ conv64
+
+lexattribute line_comment #
+
 topsym ES
 resync ;
 
@@ -21,10 +30,14 @@ left - 400
 nonassoc = 200
 right == 300
 
-# Rules
+#lexvalue int Num(n) n
+#lexvalue var Alphanum(x) x
+#lexattribute set_line_comment("#")
+
 E --> Val:m { Val(m) }
 E --> Var:s { Var(s) }
 E --> Float:f { Float(f) }
+E --> Ulong:u { Uint(u) }
 E --> let Var:x = E:e in E:b {Letexp(x,e,b)}
 E --> E:e1 + E:e2 { Plus(e1,e2) }
 E --> E:e1 - E:e2 { Minus(e1,e2) }
@@ -33,10 +46,13 @@ E --> E:e1 / E:e2 { Divide(e1,e2) }
 E --> E:e1 == E:e2 { Equals(e1,e2) }
 E(600) --> - E:e { Negative(e) }
 E --> ( E:e )  { e }
+ES --> E<;+>:v ;? { v }
+
+EOF
+
+Everything after EOF is ignored and can be use for comments
+
+alterntive rules for ES:
 #ES --> E:e ; { let v = Vec<expr>() in (v.Add(e); v) }
 #ES --> ES:es  E:e ;  { (es.Add(e); es) }
-#Esemi --> E:e ; { e }
-#ES --> Esemi+:v { v }
 #ES --> (E ;)+:v { v }
-ES --> E<;+>:v ;? { v }
-EOF

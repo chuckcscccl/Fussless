@@ -5,7 +5,7 @@
 !
 !let conv64 (x:string) :uint64 = System.UInt64.Parse(x.Substring(0,x.Length-2))
 
-
+# Vec is defined the namespace as an alias for ResizeArray
 valuetype Vec<expr>
 
 nonterminal E expr
@@ -42,7 +42,13 @@ E --> let Var:x = E:e in E:b {Letexp(x,e,b)}
 E --> E:e1 + E:e2 { Plus(e1,e2) }
 E --> E:e1 - E:e2 { Minus(e1,e2) }
 E --> E:e1 * E:e2 { Times(e1,e2) }
-E --> E:e1 / E:e2 { Divide(e1,e2) }
+E ==> E:e1 / E:e2 {
+  if e2=Val(0) then
+     let (ln,cl) = parser.position(2)
+     printfn "Warning:obvious divsion by 0, line %d column %d" ln cl
+  Divide(e1,e2)
+  } <==
+
 E --> E:e1 == E:e2 { Equals(e1,e2) }
 E(600) --> - E:e { Negative(e) }
 E --> ( E:e )  { e }

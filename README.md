@@ -48,8 +48,11 @@ To build the basic Fussless system, do the following **once**:
 2. compile absLexer.cs:  **mcs absLexer.cs /t:library**
 3. compile RuntimeParser.fs:  **fsharpc RuntimeParser.fs -a -r absLexer.dll**
 
-This will create absLexer.dll and RuntimeParser.dll that you would use for
-every example.
+This will create **absLexer.dll** and **RuntimeParser.dll** that are need by 
+all parsers.  Unless you create your parsing applications within the Fussless
+directory you should **export MONO_PATH = where/ever/you/put/Fussless/**
+for mono to find these assemblies.  
+
 
 3.  The repository contains the CsLex executable (lex.exe) along with its
 MIT license.  However, if this does not work, download and build CsLex
@@ -64,10 +67,15 @@ a tutorial and its reference documentation.
 
 #### Constructing and testing a parser.
 
-The easiest way to construct a parser is to write a grammar then run gnu make
-on the makefile script included in Fussless.  The makefile was written with
-mono defaults and should be modified for other platforms.  To build a parser
-from a grammar such as test1.grammar, run
+The easiest way to construct a parser is to write a grammar then run
+gnu make on the
+[Makefile](https://github.com/chuckcscccl/Fussless/blob/main/Makefile)
+included in Fussless.  It was written with mono
+defaults and should be modified for other platforms.  If you move the
+makefile outside of the Fussless directory then you should change the
+FUSSLESS variable in the makefile accordingly.
+
+To build a parser from a grammar such as test1.grammar, run
 
 >      make GRAMMAR=test1
 

@@ -80,13 +80,20 @@ To build a parser from a grammar such as test1.grammar, run
 >      make GRAMMAR=test1
 
 The GRAMMAR must be specified in the command.  This will run rustlr on the
-grammar and build test1parser.dll and test1_lex.dll.   Optionally, if you've
-written a main program for your grammar, one that invokes the parser,
-then you can invoke make with
+grammar and build test1parser.dll and test1_lex.dll.  If there are additional
+sources or libraries that are required to create the parser (e.g., the AST
+definition) run make with a definition for 'ADDITIONAL', for example:
+
+>      make GRAMMAR=test2 ADDITIONAL=/r:test2_ast.dll
+
+Optionally, if you've written a main program for your grammar, one
+that invokes the parser, then you can invoke make with
 
 >      make GRAMMAR=test1 MAIN=test1main
 
 This assumes that there's a file 'test1main.fs' and will build test1main.exe.
+
+
 
 Although the makefile will call rustlr on the grammar, we recommend
 rustlr be called separately so that it's clear if there's anything

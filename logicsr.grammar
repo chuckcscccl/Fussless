@@ -1,0 +1,24 @@
+# grammar for propositional logic
+!open PropLogic
+
+valuetype prop
+nonterminals Prop1 Prop2 Prop3 Prop4
+valueterminal VAR ~ string ~ Alphanum ~ (fun x -> x)
+lexterminal IMPLIES ->
+lexterminal OR v
+lexterminal AND ^
+lexterminal NOT ~
+lexterminal LPAREN (
+lexterminal RPAREN )
+topsym Prop1
+
+Prop4 --> VAR:x { Var(x) }
+Prop4 --> NOT Prop1:a { Not(a) }
+
+Prop --> Prop:a AND Prop:b { And(a,b) }
+Prop:Or --> Prop:a OR Prop:b { Or(a,b) }
+Prop:Implies --> Prop:a IMPLIES Prop:b { Implies(a,b) }
+
+Prop --> LPAREN Prop:p RPAREN { p }
+
+EOF

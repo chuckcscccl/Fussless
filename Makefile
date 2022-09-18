@@ -19,7 +19,7 @@ $(MAIN).exe : $(MAIN).fs $(GRAMMAR)_lex.dll $(GRAMMAR)parser.dll
 endif
 
 $(GRAMMAR)_lex.dll $(GRAMMAR)parser.dll : $(GRAMMAR)_lex.cs $(GRAMMAR)parser.fs
-	$(CSC) /t:library $(GRAMMAR)_lex.cs /r:$(FUSSLESS)absLexer.dll
+	$(CSC) /t:library $(GRAMMAR)_lex.cs /r:$(FUSSLESS)absLexer.dll $(ADDITIONAL)
 	$(FSC) -a $(GRAMMAR)parser.fs /r:$(FUSSLESS)RuntimeParser.dll /r:$(FUSSLESS)absLexer.dll $(ADDITIONAL)
 
 $(GRAMMAR)_lex.cs : $(GRAMMAR).lex

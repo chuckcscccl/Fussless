@@ -10,6 +10,24 @@ open Option
 //  abstract Default: unit -> 'A;
 
 type Vec<'A> = ResizeArray<'A>
+type HashMap<'A,'B> = Dictionary<'A,'B>
+
+///// LBox analog
+type LBox<'AT> =
+  {
+    mutable value: 'AT;
+    line : int;
+    column: int;
+  }
+let lbox<'AT> (v:'AT,ln:int,cn:int) =
+  {
+    LBox.value =v;
+    line=ln;
+    column=cn;
+  }
+// Active pattern hides the lexical info:
+let (|Lbox|) (b:LBox<'AT>) = Lbox(b.value)
+
 
 // this is the only token type the abs parser needs to know about
 type TerminalToken<'AT> =   // AT will be FLTypeDUnion
@@ -30,7 +48,8 @@ type StackedItem<'AT> =
      mutable svalue: 'AT;
      mutable line : int;
      mutable column : int;
-  };;
+  }
+  member this.to_lbox() = {LBox.value=this.svalue; line=this.line; column=this.column;}
 
 type Stateaction = Shift of int | Reduce of int | Gotonext of int | Accept | ParseError of string;;
 
@@ -63,7 +82,6 @@ and RTParser<'AT,'ET> =
     let item = this.stack.[lasti]
     this.stack.RemoveAt(lasti)
     this.positions.Add((item.line,item.column));
-    //this.line <- item.line; this.column <- item.column;
     item;
   member this.position(i) =
     if i<0 || i>=this.positions.Count then (0,0)

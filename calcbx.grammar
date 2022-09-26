@@ -1,0 +1,68 @@
+# F# version, non-ambiguous, does not rely on precedence/assoc declarations
+
+!
+!type expr = Val of LBox<int> | Plus of LBox<expr>*LBox<expr> | Times of LBox<expr>*LBox<expr> | Divide of LBox<expr>*LBox<expr> | Negative of LBox<expr>;;
+!
+!// active pattern for expr, hides LBox layer
+!let (|VAL|PLUS|TIMES|DIV|NEG|) (e:expr) =
+!  match e with
+!    | Val(Lbox(x)) -> VAL(x)
+!    | Plus(Lbox(a),Lbox(b)) -> PLUS(a,b)
+!    | Times(Lbox(a),Lbox(b)) -> TIMES(a,b)
+!    | Divide(Lbox(a),Lbox(b)) -> DIV(a,b)
+!    | Negative({value=v}) -> NEG(v)
+!
+!let rec eval = function
+!  | Val(Lbox(x)) -> x
+!  | Plus(Lbox(a),Lbox(b)) -> (eval a) + (eval b)
+!  | TIMES(a,b) -> (eval a) * (eval b) 
+!  | NEG(NEG(a)) -> eval a
+!  | NEG(a) -> -1 * (eval a)
+!  | Divide(Lbox(a),(Lbox(b) as n)) ->
+!    let bv = (eval b)
+!    if bv=0 then
+!       raise(Exception(sprintf "division by zero column %d\n" n.column))
+!    (eval a) / bv
+!  | _ -> 0  // always have default when using active patterns
+
+# Vec is defined the namespace as an alias for ResizeArray
+valuetype expr
+
+# E5 binds tightest
+nonterminal E5 expr
+nonterminal E4 expr
+nonterminal E3 expr
+
+nonterminal ES
+terminals + - * / ( ) ;
+terminals let in
+valueterminal Val ~ int ~ Num ~ int
+valueterminal Var ~ string ~ Alphanum ~ (fun x -> x)
+lexattribute line_comment #
+
+topsym E3
+resync ;
+# resync defines an error-recovery point, currently not used by F# parser
+
+E5 --> Val:[m] { Val(m) }
+E5 --> - E5:[e] { Negative(e) }
+E5 --> ( E3:e ) { e }
+
+# for * and /
+E4 --> E5:x { x }
+E4 --> E4:[e1] * E5:[e2] { Times(e1,e2) }
+E4 --> E4:[e1] / E5:[e2] { Divide(e1,e2) }
+  
+# for + 
+E3 --> E4:e { e }
+E3 --> E3:[e1] + E4:[e2] { Plus(e1,e2) }
+EOF
+
+Everything after EOF is ignored and can be used for more comments
+
+alterntive rules for ES:
+#ES --> E:e ; { let v = Vec<expr>() in (v.Add(e); v) }
+#ES --> ES:es  E:e ;  { (es.Add(e); es) }
+
+# this will always require a ; at the end:
+#ES --> (E ;)+:v { v }

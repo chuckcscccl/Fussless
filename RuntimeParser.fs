@@ -53,6 +53,7 @@ type StackedItem<'AT> =
 
 type Stateaction = Shift of int | Reduce of int | Gotonext of int | Accept | ParseError of string;;
 
+
 // runtime parser and runtime production:
 type RTProduction<'AT,'ET> =
   {
@@ -116,6 +117,43 @@ and RTParser<'AT,'ET> =
           Console.Error.WriteLine("LR state transition table corrupted; no suitable action after reduce");
           exit(1);
 
+    member this.get_action(lookahead:TerminalToken<'AT>) =
+      if this.stack.Count=0 then None
+      else
+        let tos = this.stack.[this.stack.Count-1]
+        try (Some(this.RSM.[tos.statei].[lookahead.sym])) with | _ -> None;
+
+    member this.err_recover1(lookahead:TerminalToken<'AT>) =
+      let lexinfo = ", line "+string(lookahead.line)+", column "+string(lookahead.column);
+      this.report_error("Unexpected Token "+lookahead.sym+lexinfo,false)
+      // look for resynch token, then look down stack for something that can
+      // continue.  If no resynch token exists, then skip input 
+      // until top state can handle the next token
+      if lookahead.sym="EOF" then (this.stopparsing<-true; lookahead)
+      else if this.resynch.Count>0 then
+        let mutable la = lookahead
+        while not(la.sym="EOF" || this.stopparsing || this.resynch.Contains(la.sym)) do
+           let nextla = this.NextToken()
+           if Option.isNone(nextla) then this.stopparsing <- true
+           nextla |> map (fun x -> la <- x) |> ignore
+        if this.resynch.Contains(la.sym) then // do one more
+           //printfn "attempting error recovery: skipping past next %s ..." la.sym
+           let nextla = this.NextToken()
+           if Option.isNone(nextla) then this.stopparsing <- true
+           nextla |> map (fun x -> la <- x) |> ignore
+           //printfn "next symbol after resynch marker is %s" la.sym
+        let mutable i = this.stack.Count-1
+        while not(this.stopparsing) && i>=0 && Option.isNone(this.get_action(la)) do
+           this.stack.RemoveAt(i)
+           i<-i-1;
+        if i<0 then this.stopparsing<-true
+        la
+      else
+        let nextla = this.NextToken()
+        if Option.isSome(nextla) then nextla.Value
+        else (this.stopparsing<-true; lookahead)
+
+
   ////////////// core parse function
   member this.parse_core() =  // no error handlers yet
     this.stack.Clear()
@@ -137,7 +175,6 @@ and RTParser<'AT,'ET> =
       let tos = this.stack.[tosi]
       this.line <- tos.line; this.column <- tos.column;
       let currentstate = tos.statei
-      //let lexinfo = ", line "+string(this.line)+", column "+string(this.column);
       let lexinfo = ", line "+string(lookahead.line)+", column "+string(lookahead.column);
       let mutable actionopt = try (Some(this.RSM.[currentstate].[lookahead.sym])) with | _ -> None;
       match actionopt with
@@ -148,32 +185,13 @@ and RTParser<'AT,'ET> =
            if this.stack.Count<1 then this.err_occurred<-true
            else result <- Some(this.Pop().svalue)
         | Some(ParseError(msg)) -> this.abort(msg+lexinfo)
-        | _ -> this.abort("Unexpected Token "+lookahead.sym+lexinfo)
-//        | _ -> this.abort("Unexpected Token "+string(lookahead.sym)+"("+string(lookahead.svalue)+")"+lexinfo)                
-        //| Some(Gotonext _) -> this.abort("LR parse table corrupted"+lexinfo);
+        | _ -> lookahead <- this.err_recover1(lookahead)
     // while not(stopparsing)
     result;;
     
 let err_reporter1(self:RTParser<'AT,'ET>, lookahead:TerminalToken<'AT>, actionopt:Stateaction option) =
   self.report_error("Unexpected Token"+string(lookahead.sym),true);
 
-let err_recover1(self:RTParser<'AT,'ET>, lookahead:TerminalToken<'AT>) =
-  None;
-
-(*
-        | _ ->
-          err_reporter(this,lookahead,actionopt);
-          actionopt = err_recover(this,lookahead)
-          if (isSome actionopt)
-      let action = match actionopt with
-                 | Some(ParseError(_)) | None -> 
-                   err_reporter(this,lookahead,actionopt)
-                   let opt2 = err_recover(this,lookahead)
-                   if (isSome opt2) then opt2.Value
-                   else
-                     this.stopparsing <- true
-                 | _ -> actionopt.Value
-*)
 
 let skeleton_production<'AT,'ET>(s) : RTProduction<'AT,'ET> =
   {

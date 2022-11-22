@@ -12,18 +12,23 @@ open Option
 type Vec<'A> = ResizeArray<'A>
 type HashMap<'A,'B> = Dictionary<'A,'B>
 
+let mutable private uid_counter:uint64 = 0UL;
+
 ///// LBox analog
 type LBox<'AT> =
   {
     mutable value: 'AT;
     line : int;
     column: int;
+    uid:uint64;
   }
 let lbox<'AT> (v:'AT,ln:int,cn:int) =
+  uid_counter <- uid_counter + 1UL;
   {
     LBox.value =v;
     line=ln;
     column=cn;
+    uid=uid_counter;
   }
 // Active pattern hides the lexical info:
 let (|Lbox|) (b:LBox<'AT>) = Lbox(b.value)
@@ -49,7 +54,8 @@ type StackedItem<'AT> =
      mutable line : int;
      mutable column : int;
   }
-  member this.to_lbox() = {LBox.value=this.svalue; line=this.line; column=this.column;}
+  member this.to_lbox() = lbox(this.svalue,this.line,this.column)
+  //{LBox.value=this.svalue; line=this.line; column=this.column;}
 
 type Stateaction = Shift of int | Reduce of int | Gotonext of int | Accept | ParseError of string;;
 

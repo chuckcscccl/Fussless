@@ -12,7 +12,7 @@ public interface absLexer  // not used by Fussless
 public interface AbstractLexer<ET>  // in use by Fussless
 {
    RawToken next_lt();
-   void set_shared(ET shared);
+   //void set_shared(ET shared);
 }
 
 

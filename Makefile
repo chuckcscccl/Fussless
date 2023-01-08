@@ -9,10 +9,11 @@ FSC = fsharpc
 CSC = mcs
 LEX = $(FUSSLESS)lex.exe
 RUSTLR = rustlr
-#RUSTLR = ../target/release/rustlr.exe
 RUSTLROPTIONS = -genlex
 #MAIN = $(GRAMMAR)main
+AUTOAST = false
 
+ifneq ($(AUTOAST), true)
 ifdef MAIN
 $(MAIN).exe : $(MAIN).fs $(GRAMMAR)_lex.dll $(GRAMMAR)parser.dll
 	$(FSC) $(MAIN).fs /r:$(GRAMMAR)_lex.dll /r:$(GRAMMAR)parser.dll /r:$(FUSSLESS)RuntimeParser.dll /r:$(FUSSLESS)absLexer.dll $(ADDITIONAL)
@@ -27,7 +28,29 @@ $(GRAMMAR)_lex.cs : $(GRAMMAR).lex
 
 $(GRAMMAR).lex $(GRAMMAR)parser.fs : $(GRAMMAR).grammar
 	$(RUSTLR) $(GRAMMAR).grammar -fsharp $(RUSTLROPTIONS)
+else
+# AUTOAST=true
+ifdef MAIN
+$(MAIN).exe : $(MAIN).fs $(GRAMMAR)_lex.dll $(GRAMMAR)parser.dll $(GRAMMAR)_ast.dll
+	$(FSC) $(MAIN).fs /r:$(GRAMMAR)_lex.dll /r:$(GRAMMAR)parser.dll /r:$(GRAMMAR)_ast.dll /r:$(FUSSLESS)RuntimeParser.dll /r:$(FUSSLESS)absLexer.dll $(ADDITIONAL)
+endif
 
+$(GRAMMAR)parser.dll : $(GRAMMAR)parser.fs $(GRAMMAR)_ast.dll
+	$(FSC) -a $(GRAMMAR)parser.fs /r:$(GRAMMAR)_ast.dll /r:$(FUSSLESS)RuntimeParser.dll /r:$(FUSSLESS)absLexer.dll $(ADDITIONAL)
+
+$(GRAMMAR)_ast.dll : $(GRAMMAR)_ast.fs
+	$(FSC) -a $(GRAMMAR)_ast.fs /r:$(FUSSLESS)RuntimeParser.dll /r:$(FUSSLESS)absLexer.dll $(ADDITIONAL)
+
+$(GRAMMAR)_lex.dll : $(GRAMMAR)_lex.cs
+	$(CSC) /t:library $(GRAMMAR)_lex.cs /r:$(FUSSLESS)absLexer.dll $(CSADDITIONAL)
+
+$(GRAMMAR)_lex.cs : $(GRAMMAR).lex
+	$(LEX) $(GRAMMAR).lex	
+
+$(GRAMMAR).lex $(GRAMMAR)parser.fs $(GRAMMAR)_ast.fs: $(GRAMMAR).grammar
+	$(RUSTLR) $(GRAMMAR).grammar -auto -fsharp $(RUSTLROPTIONS)
+
+endif
 
 clean:
 	rm -f $(GRAMMAR).lex $(GRAMMAR)parser.fs $(GRAMMAR)_lex.cs $(GRAMMAR)*.dll

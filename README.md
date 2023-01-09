@@ -96,7 +96,17 @@ that invokes the parser, then you can invoke make with
 
 This assumes that there's a file 'test1main.fs' and will build test1main.exe.
 
+##### **AUTOAST** option
 
+To build a parser from a grammar that automatically generates abstract syntax
+types and semantic actions, run
+
+>      make GRAMMAR=fs7c AUTOAST=true
+
+where `fs7c.grammar` defines a simplified programming language.  The generated
+AST types will be in `fs7c_ast.fs`
+
+<br>
 
 Although the makefile will call rustlr on the grammar, we recommend
 rustlr be called separately so that it's clear if there's anything

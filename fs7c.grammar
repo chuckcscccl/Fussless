@@ -2,7 +2,10 @@
 # language used in a compilers course taught at Hofstra University in 2022.
 
 # This grammar demonstrates the 'auto' option to generate abstract syntax
-# types and semantic actions, with a small number of manual overrides
+# types and semantic actions, with a small number of manual overrides.
+
+# Create the parser, lexical scanner and AST types in Mono with
+#   make GRAMMAR=fs7c AUTOAST=true
 
 auto
 

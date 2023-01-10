@@ -1,0 +1,79 @@
+# Grammar testing automatic generation of abstract syntax
+
+auto
+
+terminals + - * / ( ) = ;
+terminals let in
+valueterminal int ~ int ~ Num ~ int
+valueterminal var ~ string ~ Alphanum ~ (fun x -> x)
+lexattribute line_comment #
+
+nonterminal Expr
+nonterminal ExprList
+nonterminal UnaryExpr : Expr
+nonterminal LetExpr : Expr
+nonterminal Txpr : Expr
+nonterminal Sxpr
+nonterminal Aexpr
+nonterminal Bexpr : Aexpr
+nonterminals Yxpr Zxpr Xxpr
+nonterminals AA BB
+flatten BB
+flatten Yxpr Zxpr Xxpr
+
+topsym ExprList
+resync ;
+
+left * 500
+left / 500
+left + 400
+left - 400
+
+# rule for testing AST generation:
+#lexvalue bigint BigNumber(n) n
+Txpr --> ; int:ai int:bi ;
+Expr --> Sxpr ; Sxpr
+Sxpr --> Txpr:a1 ; Txpr:b
+Zxpr --> int:x ; Yxpr:a ; Yxpr:b int:y Xxpr:[xx] Expr Xxpr:yy
+Yxpr --> var ; var
+Xxpr:X1 --> int:a int:[b] ;
+Xxpr:X2 --> int ; Yxpr:u var { (printfn "see %A" u;) ... }
+AA --> BB:p int:q BB:r
+AA --> var var
+BB --> var:a AA:b AA:c
+#BB --> var AA AA
+
+Aexpr:ae --> int
+Bexpr:be --> var
+Expr --> ; ; Aexpr
+
+UnaryExpr:Val --> int
+UnaryExpr:Var --> var
+UnaryExpr:Neg --> - UnaryExpr
+UnaryExpr --> ( LetExpr )
+
+Expr --> UnaryExpr
+Expr:Plus--> Expr + Expr
+Expr:Minus --> Expr:a - Expr:b
+Expr:Div --> Expr / Expr
+Expr:Times --> Expr:leftexpr * Expr
+
+LetExpr --> Expr
+LetExpr:Let --> let var = Expr in LetExpr
+
+ExprList:nil -->
+ExprList:cons --> LetExpr:car ; ExprList:cdr
+
+#ExprList --> { vec![] }
+#ExprList --> ExprList:cdr LetExpr:car ; { cdr.push(car); cdr }
+#ExprList --> (LetExpr ;)+
+
+EOF
+
+notes:
+
+passthru will not change the type of a non-terminal.
+However, when generating a one-time use nonterminal when processing
++, ?, passthru will set the type of nonterminal, so E --> F means E
+will inherit the type of F.  But in writing a grammar, this is only
+possible if E and F have the same type.

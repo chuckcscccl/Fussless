@@ -4,13 +4,34 @@ open System.Collections.Generic
 open Option
 //open FusslessRuntimeParser
 
-
-// interface declaration:
-//type HasDefault<'A> =
-//  abstract Default: unit -> 'A;
+type AST<'T> = Result<'T,string>
 
 type Vec<'A> = ResizeArray<'A>
 type HashMap<'A,'B> = Dictionary<'A,'B>
+
+type BaseDefault =
+  static member get(x:int):int = 0
+  static member get(x:uint) = 0u;
+  static member get(x:int64):int64 = 0L
+  static member get(x:uint64):uint64 = 0UL
+  static member get(x:uint16):uint16 = uint16(0);
+  static member get(x:int16):int16 = int16(0);
+  static member get(x:byte):byte = byte(0);
+  static member get(x:sbyte):sbyte = sbyte(0);
+  static member get(x:float):float = 0.0
+  static member get(x:float32):float32 = x
+  static member get(x:bool):bool = false
+  static member get(x:char):char = char(0)
+  static member get(x:string) = ""
+  static member get(x:'a list):'a list = []
+  static member get(x:'a []):'a [] = [||]  
+  static member get(x:Vec<'T>) = Vec<'T>()
+  static member get(x:HashMap<'K,'V>) = HashMap<'K,'V>()
+  static member get(x:HashSet<'K>) = HashSet<'K>()  
+  static member get(x:unit) = ()
+  static member get(x:option<'T>):option<'T> = None
+  static member get(x:Result<'A,'B>):Result<'A,'B> = Error(Unchecked.defaultof<'B>)
+  static member get(x:obj) = x
 
 let mutable private uid_counter:uint64 = 0UL;
 
@@ -50,7 +71,7 @@ type TerminalToken<'AT> =   // AT will be FLTypeDUnion
 
 type StackedItem<'AT> =
   {  mutable statei: int;
-     mutable svalue: 'AT;
+     mutable svalue: 'AT
      mutable line : int;
      mutable column : int;
   }
@@ -188,8 +209,13 @@ and RTParser<'AT,'ET> =
         | Some(Reduce(ri)) -> this.reduce(ri)
         | Some(Accept) ->
            this.stopparsing <- true
-           if this.stack.Count<1 then this.err_occurred<-true
-           else result <- Some(this.Pop().svalue)
+           if this.stack.Count<1 then
+             this.err_occurred<-true
+           else
+             let temp = this.Pop().svalue
+             match (temp :> obj) with
+               | null -> () //this.err_occurred <- true  // stays None
+               | _ -> result <- Some(temp)
         | Some(ParseError(msg)) -> this.abort(msg+lexinfo)
         | _ -> lookahead <- this.err_recover1(lookahead)
     // while not(stopparsing)

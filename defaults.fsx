@@ -10,8 +10,8 @@ type BaseDefault =
   static member get(x:'a []):'a [] = [||]
   static member get(x:int):int = 0
   static member get(x:float):float = 0.0
-  static member get(x:'a*'b) =
-    (BaseDefault.get(Unchecked.defaultof<obj>) :?> 'a, BaseDefault.get(Unchecked.defaultof<obj>) :?> 'b)
+  static member get(x:'a, y:'b) =
+    (BaseDefault.get(x :> obj), BaseDefault.get(y :> obj))
   static member get(x:Vec<'T>):Vec<'T> = Vec<'T>()
   static member get(x:HashMap<'K,'V>) = HashMap<'K,'V>()
   static member get(x:string) = ""  

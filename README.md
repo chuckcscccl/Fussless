@@ -33,6 +33,11 @@ The contents of this repository are as follows:
 
 - fs7c.grammar : larger grammar for a simplified programming language that
   demonstrates the most advanced features of the system.
+
+- sample : dotnet9 project directory with sample .fsproj file
+
+- multisample : dotnet9 project directory with sample .fsproj file and
+  sub-directory lexer containt C\# project component.
   
 - Makefile : written for a Mono command-line environment
 

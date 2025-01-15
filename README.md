@@ -50,7 +50,7 @@ install rustlr with **cargo install rustlr**.  Rustlr is found at
 contains links to a tutorial and its reference documentation.  
 
 The .Net end of the system can be built as a `dotnet` project with the
-`Fussless.fsproj` file included in the repository.  After cloning the
+[Fussless.fsproj](https://github.com/chuckcscccl/Fussless/blob/main/Fussless.fsproj) file included in the repository.  After cloning the
 repository you can create a new project but make sure that the .fsproj
 file contains the same contents as `Fussless.fsproj`.
 
@@ -62,8 +62,8 @@ compilers:
 
 This will create **absLexer.dll** and **RuntimeParser.dll** that are
 required by all parsers.  Unless you create your parsing applications
-within the Fussless directory you should **export MONO_PATH =
-where/ever/you/put/Fussless/** for mono to find these assemblies.
+within the Fussless directory you should **`export MONO_PATH =
+where/ever/you/put/Fussless/`** for mono to find these assemblies.
 
 <p>
 
@@ -101,7 +101,7 @@ all the component of the generated parser.  Follow these steps:
 
   3. Back in the `multisample` folder/project, be sure to `dotnet add reference`
      to the both the Fussless project and to the lexer sub-project. Mimic
-     the contents of the sample `multisample.fsproj` file.
+     the contents of the sample [multisample.fsproj](https://github.com/chuckcscccl/Fussless/blob/main/multisample/multisample.fsproj) file.
 
   4. `dotnet run`
 

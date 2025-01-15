@@ -1,4 +1,4 @@
-### Fussless: Rustlr Target for F\#
+## Fussless: Rustlr Target for F\#
 
 "Fussless" is a parser generation system for F\# written in Rust as part of the
 **[Rustlr](https://crates.io/crates/rustlr)** parser generator. This package contains the .Net end of the project including the runtime parser and
@@ -37,51 +37,83 @@ The contents of this repository are as follows:
 - sample : dotnet9 project directory with sample .fsproj file
 
 - multisample : dotnet9 project directory with sample .fsproj file and
-  sub-directory lexer containt C\# project component.
+  sub-directory lexer containing a C\# project component.
   
 - Makefile : written for a Mono command-line environment
 
 
-#### Building Fussless
+### Building Fussless
 
-The system was contructed and tested on Mono and therefore should be
-portable to any platform or development setting.
+First, install Rust (if you don't have it) from rust-lang.org, then
+install rustlr with **cargo install rustlr**.  Rustlr is found at
+[crates.io/crates/rustlr](https://crates.io/crates/rustlr), which also
+contains links to a tutorial and its reference documentation.  
 
-To build the basic Fussless system, do the following **once**:
+The .Net end of the system can be built as a `dotnet` project with the
+`Fussless.fsproj` file included in the repository.  After cloning the
+repository you can create a new project but make sure that the .fsproj
+file contains the same contents as `Fussless.fsproj`.
 
-1. git clone https://github.com/chuckcscccl/Fussless.git
-   (or otherwise download the files from github).
-   The repository contains pre-built dlls, but they may need to be recompiled
-   if your version of .Net or F# is slightly different:
-2. compile absLexer.cs:  **mcs absLexer.cs /t:library**
-3. compile RuntimeParser.fs:  **fsharpc RuntimeParser.fs -a -r absLexer.dll**
+It's also possible to build Fussless using Mono and the `mcs` and `fsharpc`
+compilers:
 
-This will create **absLexer.dll** and **RuntimeParser.dll** that are need by 
-all parsers.  Unless you create your parsing applications within the Fussless
-directory you should **export MONO_PATH = where/ever/you/put/Fussless/**
-for mono to find these assemblies.  
+  1. compile absLexer.cs:  **mcs absLexer.cs /t:library**
+  2. compile RuntimeParser.fs:  **fsharpc RuntimeParser.fs -a -r absLexer.dll**
 
+This will create **absLexer.dll** and **RuntimeParser.dll** that are
+required by all parsers.  Unless you create your parsing applications
+within the Fussless directory you should **export MONO_PATH =
+where/ever/you/put/Fussless/** for mono to find these assemblies.
 
-3.  The repository contains the CsLex executable (lex.exe) along with its
-MIT license.  However, if this does not work, download and build CsLex
-(generate the lex.exe program).
-   *Note: to build CsLex on newer Windows systems, you must manually create the directory lex/bin (or lex\bin) before running nmake in lex/src/.*  The lex.exe file
-will be created in the bin directory by nmake.
+<p>
 
-4. Install Rust (if you don't have it) from rust-lang.org, then install
-rustlr with **cargo install rustlr**.   Rustlr is found at [crates.io/crates/rustlr](https://crates.io/crates/rustlr), which also contains links to
-a tutorial and its reference documentation.
+The repository contains the CsLex executable (lex.exe).  However,
+if this does not work, download and build CsLex (generate the lex.exe
+program).  *Note: to build CsLex on newer Windows systems, you must
+manually create the directory `lex/bin` (or `lex\bin`) before running
+nmake in `lex/src/.*` The `lex.exe` file will be created in the bin
+directory by nmake.
 
 
-#### Constructing and testing a parser.
 
-The easiest way to construct a parser is to write a grammar then run
-gnu make on the
-[Makefile](https://github.com/chuckcscccl/Fussless/blob/main/Makefile)
-included in Fussless.  It was written with mono
-defaults and should be modified for other platforms.  If you move the
-makefile outside of the Fussless directory then you should change the
-FUSSLESS variable in the makefile accordingly.
+### Constructing and testing a parser.
+
+Each parser contains a component in F\# as well as one in C\# (the
+lexical tokenizer).  This can be built as F\# `dotnet` project that
+contains a C\# project in a subdirectory as demonstrated by the skeleton
+`multisample` directory included in the repository.  The sample
+contains a grammar (`calcautofs.grammar`) and a `main` that expects
+all the component of the generated parser.  Follow these steps:
+
+  1. Run the rustlr application on the grammar:
+     ```
+       rustlr calcautofs.grammar -fsharp
+     ```
+     This produces the files `calcautofs_ast.fs`, `calcautofsparser.fs` and
+     `calcautofs.lex`.
+     Run the included CSlex executable (lex.exe) on the `.lex` file,
+     which creates `calcautofs_lex.cs`: move this file to the lexer
+     subdirectory.
+
+  2. The lexer sub-directory should also contain `absLexer.cs`, which
+     is found in the Fussless repository (or a reference to
+     `absLexer.dll`).  Build this directory into a C\# `classlib` project.
+
+  3. Back in the `multisample` folder/project, be sure to `dotnet add reference`
+     to the both the Fussless project and to the lexer sub-project. Mimic
+     the contents of the sample `multisample.fsproj` file.
+
+  4. `dotnet run`
+
+
+#### Using Fussless with Mono
+
+The Fussless project was originally created with Mono and comes with a
+Mono-compatible
+Makefile](https://github.com/chuckcscccl/Fussless/blob/main/Makefile)
+.  This is another way to use Fussless. If you move the makefile
+outside of the Fussless directory then you should change the FUSSLESS
+variable in the makefile accordingly.
 
 To build a parser from a grammar such as test1.grammar, run
 
@@ -116,28 +148,6 @@ AST types will be in `fs7c_ast.fs`
 Although the makefile will call rustlr on the grammar, we recommend
 rustlr be called separately so that it's clear if there's anything
 wrong with the grammar.
-
-
-##### Manaul Build Steps.
-
-To facilitate the adaptation of Fussless on other developmen platforms, we
-detail the steps that the makefile takes.
-
-To build and test a specific example, do the following:
-
-1. Run **rustlr test1.grammar -fsharp** (with optionally a -o directory/) at a
-   shell prompt. This will create a file 'test1parser.fs' and a file 'test1.lex'
-
-2. compile the generated parser: **fsharpc test1parser.fs -r RuntimeParser.dll**
-
-3. Build the generated lexer:
-   - lex.exe test1.lex   (where lex.exe is the CsLex executable)
-   - mcs test1_lex.cs /t:library /r:absLexer.dll
-
-4. Build and run the test program:
-   - **fsharpc test1main.fs -r test1parser.dll -r test1_lex.dll**
-   - (mono) test1main.exe  (enter 3+2*5 or similar expression at the prompt)
-
 
 <p>
 

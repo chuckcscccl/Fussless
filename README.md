@@ -100,7 +100,7 @@ all the component of the generated parser.  Follow these steps:
      `absLexer.dll`).  Build this directory into a C\# `classlib` project.
 
   3. Back in the `multisample` folder/project, be sure to `dotnet add reference`
-     to the both the Fussless project and to the lexer sub-project. Mimic
+     to the both the Fussless project and to the lexer sub-project. Follow
      the contents of the sample [multisample.fsproj](https://github.com/chuckcscccl/Fussless/blob/main/multisample/multisample.fsproj) file.
 
   4. `dotnet run`

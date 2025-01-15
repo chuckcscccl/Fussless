@@ -151,5 +151,5 @@ wrong with the grammar.
 
 <p>
 
-A **[tutorial](https://cs.hofstra.edu/~cscccl/rustlr_project/chapterfs.html)** on
+A **[tutorial](https://chuckcscccl.github.io/rustlr_project/chapterfs.html)** on
 how to write grammars for Fussless is available.

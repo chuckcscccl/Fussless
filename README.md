@@ -52,7 +52,7 @@ contains links to a tutorial and its reference documentation.
 The .Net end of the system can be built as a `dotnet` project with the
 [Fussless.fsproj](https://github.com/chuckcscccl/Fussless/blob/main/Fussless.fsproj) file included in the repository.  After cloning the
 repository you can create a new project but make sure that the .fsproj
-file contains the same contents as `Fussless.fsproj`.
+file contains the same contents as the [provided sample](https://github.com/chuckcscccl/Fussless/blob/main/Fussless.fsproj).
 
 It's also possible to build Fussless using Mono and the `mcs` and `fsharpc`
 compilers:
